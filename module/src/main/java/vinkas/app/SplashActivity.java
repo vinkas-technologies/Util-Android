@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 
+import vinkas.util.Helper;
 import vinkas.util.R;
 
 /**
@@ -15,30 +16,10 @@ import vinkas.util.R;
  */
 public abstract class SplashActivity extends Activity {
 
-    public boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        if (isNetworkAvailable())
-            initialize();
-        else {
-            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Unable to connect to internet. Please try again later.");
-            dlgAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    finish();
-                }
-            });
-            dlgAlert.setCancelable(false);
-            dlgAlert.create().show();
-        }
+        initialize();
     }
 
     @Override
@@ -48,9 +29,19 @@ public abstract class SplashActivity extends Activity {
     }
 
     protected void initialize() {
-        if(isReady()) {
-            startMainActivity();
-        }
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    while (isReady() == false)
+                        sleep(1000);
+                    startMainActivity();
+                } catch (InterruptedException e) {
+                    Helper.onException(e);
+                }
+            }
+        };
+        thread.start();
     }
 
     public boolean isReady() {
